@@ -264,7 +264,7 @@ void Cmd(byte cmdCode)
 
   // Prepare command for asynchronuous processing ...
   cyclicStep = 0x01; 
-  byte repeats = 7; // we want the command sent 7 times
+  repeats = 7; // we want the command sent 7 times
   somfySlot = slot;
   
   sendResponse(slot);
