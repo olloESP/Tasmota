@@ -51,6 +51,11 @@ void (* const somfyCommand[])(void) PROGMEM = {
 #define SOMFY_PROG 0x8
 
 byte frame[7];
+byte sync;
+byte cyclicWait;
+byte cyclicStep;
+byte repeats;
+byte somfySlot;
 
 void BuildFrame(byte *frame, byte button);
 void SendCommand(byte *frame, byte sync);
@@ -63,7 +68,7 @@ void somfysetup() {
 }
 
 
-void Somfy_FUNC_EVERY_50_MSECOND(void)
+void Somfy_FUNC_EVERY_50_MSECOND(void) {
       //
       // Send the wake-up signal ...
       //
@@ -80,13 +85,13 @@ void Somfy_FUNC_EVERY_50_MSECOND(void)
         //AddLog_P(LOG_LEVEL_DEBUG, PSTR("SFY: %lu ********* transmission"), millis());
         // Hardware sync: two sync for the first frame, seven for the following
         // ones.
+        sync = 7; 
         for (int i = 0; i < sync; i++) {
           digitalWrite(Pin(GPIO_CC1101_GDO0), HIGH);
           delayMicroseconds(4 * SYMBOL);
           digitalWrite(Pin(GPIO_CC1101_GDO0), LOW);
           delayMicroseconds(4 * SYMBOL);
         }
-        sync = 7; 
         // Software sync
         digitalWrite(Pin(GPIO_CC1101_GDO0), HIGH);
         delayMicroseconds(4550);
@@ -128,6 +133,7 @@ void Somfy_FUNC_EVERY_50_MSECOND(void)
           // terminate.
           // We stay in this step for an other round ...
         }
+}
 
 void BuildFrame(byte *frame, byte button, unsigned int code, unsigned int remote) {
 
@@ -160,17 +166,6 @@ void BuildFrame(byte *frame, byte button, unsigned int code, unsigned int remote
     frame[i] ^= frame[i-1];
   }
 
-}
-
-
-void sendResponse ( int slot )
-{
-  Response_P(PSTR("{\"%s\":\"%s\", \"RollingCode\":\"0x%04x\", \"Address\":\"0x%06x\"}"),
-                        XdrvMailbox.command,
-                        D_JSON_DONE,
-                        Settings.somfyRemoteSettings[slot].rolling_code,
-                        Settings.somfyRemoteSettings[slot].address
-                        );
 }
 
 void sendResponse ( int slot )
@@ -269,7 +264,7 @@ void Cmd(byte cmdCode)
 
   // Prepare command for asynchronuous processing ...
   cyclicStep = 0x01; 
-  repeats = 7; // we want the command sent 7 times
+  byte repeats = 7; // we want the command sent 7 times
   somfySlot = slot;
   
   sendResponse(slot);
